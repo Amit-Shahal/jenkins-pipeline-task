@@ -1,0 +1,12 @@
+workflow-aggregator:latest
+git:latest
+git-client:latest
+maven-plugin:latest
+configuration-as-code:latest
+configuration-as-code-support:latest
+pipeline-stage-view:latest
+job-dsl:latest
+credentials:latest
+credentials-binding:latest
+ssh-credentials:latest
+junit:latest

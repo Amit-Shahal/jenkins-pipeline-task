@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    tools {
+        maven "Maven-3.9"
+        jdk "JDK17"
+    }
+
+    environment {
+        APP_DIR = 'app'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', 
+                    url: 'git@github.com:Amit-Shahal/jenkins-pipeline-task.git',
+                    credentialsId: 'github-ssh-key'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh 'mvn -B -DskipTests clean package'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh 'mvn -B test'
+                }
+            }
+            post {
+                always {
+                    junit "${APP_DIR}/target/surefire-reports/*.xml"
+                }
+            }
+        }
+
+        stage('Archive') {
+            steps {
+                dir("${APP_DIR}") {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo 'Build or tests failed!'
+        }
+        success {
+            echo 'Build and tests succeeded!'
+        }
+    }
+}

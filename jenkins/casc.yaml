@@ -1,0 +1,143 @@
+# jenkins:
+#   systemMessage: "Jenkins configured automatically with JCasC 😎"
+
+#   securityRealm:
+#     local:
+#       allowsSignup: false
+#       users:
+#         - id: "admin"
+#           password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
+
+#   authorizationStrategy:
+#     loggedInUsersCanDoAnything:
+#       allowAnonymousRead: false
+
+# credentials:
+#   system:
+#     domainCredentials:
+#       - credentials:
+#           - basicSSHUserPrivateKey:
+#               scope: GLOBAL
+#               id: "github-ssh-key"
+#               username: "git"
+#               description: "GitHub SSH Deploy Key"
+#               privateKeySource:
+#                 directEntry:
+#                   privateKey: "${GITHUB_SSH_PRIVATE_KEY}"
+
+# jobs:
+#   - script: >
+#       pipelineJob('java-app-pipeline') {
+#         description('Java application build and test pipeline')
+#         definition {
+#           cpsScm {
+#             scm {
+#               git {
+#                 remote {
+#                   url('git@github.com:Amit-Shahal/jenkins-pipeline-task.git')
+#                   credentials('github-ssh-key')
+#                 }
+#                 branches('main')
+#               }
+#             }
+#             scriptPath('jenkins/jenkinsfile')
+#           }
+#         }
+#         triggers {
+#           pollSCM('H/5 * * * *')
+#         }
+#       }
+
+# unclassified:
+#   location:
+#     url: "${JENKINS_URL:-http://localhost:8080/}"
+
+# tool:
+#   jdk:
+#     installations:
+#       - name: "JDK17"
+#         home: "/usr/lib/jvm/java-17-openjdk"
+#   maven:
+#     installations:
+#       - name: "Maven-3.9"
+#         properties:
+#           - installSource:
+#               installers:
+#                 - maven:
+#                     id: "3.9.6"
+#   git:
+#     installations:
+#       - name: "Default"
+#         home: "git"
+
+jenkins:
+  systemMessage: "Jenkins configured automatically with JCasC 😎"
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - basicSSHUserPrivateKey:
+              scope: GLOBAL
+              id: "github-ssh-key"
+              username: "git"
+              description: "GitHub SSH Deploy Key"
+              privateKeySource:
+                directEntry:
+                  privateKey: "${GITHUB_SSH_PRIVATE_KEY}"
+
+unclassified:
+  location:
+    url: "${JENKINS_URL:-http://localhost:8080/}"
+
+tool:
+  jdk:
+    installations:
+      - name: "JDK17"
+        home: "/usr/lib/jvm/java-17-openjdk"
+  maven:
+    installations:
+      - name: "Maven-3.9"
+        properties:
+          - installSource:
+              installers:
+                - maven:
+                    id: "3.9.6"
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+
+jobs:
+  - script: >
+      pipelineJob('java-app-pipeline') {
+        description('Java application build and test pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('git@github.com:Amit-Shahal/jenkins-pipeline-task.git')
+                  credentials('github-ssh-key')
+                }
+                branches('main')
+              }
+            }
+            scriptPath('jenkins/jenkinsfile')
+          }
+        }
+        triggers {
+          scm('H/5 * * * *')
+        }
+      }
