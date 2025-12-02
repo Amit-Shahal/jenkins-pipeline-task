@@ -1,23 +1,25 @@
-# ---- Stage 1: Build the application ----
-    FROM eclipse-temurin:17-jdk AS builder
+# ---- Stage 1: Build the app ----
+    FROM maven:3.9-eclipse-temurin-17 AS builder
 
     WORKDIR /app
+    
+    # Copy pom.xml and download dependencies first (cache layer)
+    COPY pom.xml .
+    RUN mvn dependency:go-offline
     
     # Copy source code
     COPY src ./src
     
-    # Compile the Java source files
-    RUN mkdir out && javac -d out src/Main.java
+    # Build (this produces target/docker-test-app-1.0.0.jar)
+    RUN mvn package -DskipTests
     
-    # Create JAR
-    RUN jar cfe app.jar Main -C out .
-    
-    # ---- Stage 2: Run the application ----
-    FROM eclipse-temurin:17-jre AS runtime
+    # ---- Stage 2: Runtime image ----
+    FROM eclipse-temurin:17-jre
     
     WORKDIR /app
     
-    COPY --from=builder /app/app.jar .
+    # Copy jar from builder
+    COPY --from=builder /app/target/*.jar app.jar
     
     ENTRYPOINT ["java", "-jar", "app.jar"]
     

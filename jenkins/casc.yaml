@@ -105,7 +105,7 @@ tool:
   jdk:
     installations:
       - name: "JDK17"
-        home: "/usr/lib/jvm/java-17-openjdk"
+        home: "/opt/java/openjdk"
   maven:
     installations:
       - name: "Maven-3.9"
