@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = "java-app"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_REPO = "${DOCKERHUB_CREDENTIALS_USR}/${APP_NAME}"
+        CONTAINER_NAME = "java-app-container"
+        EXPECTED_OUTPUT = "Hello from inside Docker!"
+    }
+
+    stages {
+
+        stage('Pull Image from Docker Hub') {
+            steps {
+                sh """
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker pull ${DOCKERHUB_REPO}:latest
+                """
+            }
+        }
+
+        stage('Run Container and Capture Output') {
+            steps {
+                script {
+                    // Ensure old container is removed first
+                    sh "docker rm -f ${CONTAINER_NAME} || true"
+
+                    // Run new container
+                    sh "docker run --name ${CONTAINER_NAME} ${DOCKERHUB_REPO}:latest > output.txt"
+
+                    // Read output printed by the app
+                    env.APP_OUTPUT = sh(script: "cat output.txt", returnStdout: true).trim()
+                    echo "Captured Output: ${env.APP_OUTPUT}"
+                }
+            }
+        }
+
+        stage('Validate Output') {
+            steps {
+                script {
+                    if (env.APP_OUTPUT != EXPECTED_OUTPUT) {
+                        error "Output mismatch! Expected '${EXPECTED_OUTPUT}' but got '${env.APP_OUTPUT}'"
+                    } else {
+                        echo "Output validated successfully!"
+                    }
+                }
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh "docker rm ${CONTAINER_NAME} || true"
+                sh "docker logout"
+            }
+        }
+    }
+
+    post {
+        success { echo "CD deployment and validation succeeded!" }
+        failure { echo "CD pipeline failed!" }
+    }
+}

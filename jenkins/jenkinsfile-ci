@@ -85,11 +85,13 @@ pipeline {
     }
 
     post {
-        failure {
-            echo 'Build or tests failed!'
-        }
         success {
-            echo 'Build and tests succeeded! Docker image pushed to Docker Hub.'
+            echo 'CI succeeded — triggering CD pipeline...'
+            build job: 'java-app-cd', wait: false
+        }
+        failure {
+            echo 'CI failed — CD will not run.'
         }
     }
 }
+
