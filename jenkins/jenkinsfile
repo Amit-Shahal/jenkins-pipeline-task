@@ -8,6 +8,9 @@ pipeline {
 
     environment {
         APP_DIR = 'app'
+        DOCKERHUB_REPO = 'your-dockerhub-username/java-app' // Update this
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
 
     stages {
@@ -47,6 +50,37 @@ pipeline {
                 }
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                dir("${APP_DIR}") {
+                    sh """
+                        docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} .
+                        docker tag ${DOCKERHUB_REPO}:${IMAGE_TAG} ${DOCKERHUB_REPO}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                sh """
+                    echo \$DOCKERHUB_CREDENTIALS_PSW | docker login -u \$DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}
+                    docker push ${DOCKERHUB_REPO}:latest
+                """
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                sh """
+                    docker logout
+                    docker rmi ${DOCKERHUB_REPO}:${IMAGE_TAG} || true
+                    docker rmi ${DOCKERHUB_REPO}:latest || true
+                """
+            }
+        }
     }
 
     post {
@@ -54,7 +88,7 @@ pipeline {
             echo 'Build or tests failed!'
         }
         success {
-            echo 'Build and tests succeeded!'
+            echo 'Build and tests succeeded! Docker image pushed to Docker Hub.'
         }
     }
 }
